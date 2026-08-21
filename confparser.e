@@ -1,10 +1,51 @@
 class CONFPARSER
 
 create {ANY}
-   read
+   read, make_from_file, make_from_path
 
 feature {ANY}
+   make_from_file (f: TEXT_FILE_READ)
+      require
+         file_attached: f /= Void
+         file_connected: f.is_connected
+      do
+         create dict.make
+         parse_file(f)
+      ensure
+         dict_not_void: dict /= Void
+      end
+
+   make_from_path (path: STRING)
+      require
+         path_attached: path /= Void
+      local
+         file: TEXT_FILE_READ
+      do
+         create dict.make
+         create file.connect_to(path)
+         if file.is_connected then
+            parse_file(file)
+            file.disconnect
+         end
+      ensure
+         dict_not_void: dict /= Void
+      end
+
+   for_each (action: PROCEDURE[TUPLE[STRING, STRING]])
+      do
+         dict.for_each(action)
+      end
+
    read (f: TEXT_FILE_READ)
+      obsolete "Use 'make_from_file' instead"
+      do
+         make_from_file(f)
+      end
+
+   dict: HASHED_DICTIONARY[STRING, STRING]
+
+feature {}
+   parse_file (f: TEXT_FILE_READ)
       require
          f /= Void and f.is_connected
       local
@@ -72,10 +113,10 @@ feature {ANY}
                      err := True
                   end
                end
+
                if not (warn or err) then
                   dict.put(value, key)
                end
-
             end
 
             if err then
@@ -85,11 +126,6 @@ feature {ANY}
             warn := False
             err := False
          end
-      end
-
-   dict: HASHED_DICTIONARY[STRING, STRING]
-      once
-         create Result.make
       end
 
 end -- class CONFPARSER
