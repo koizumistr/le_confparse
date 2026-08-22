@@ -47,9 +47,10 @@ feature {ANY}
 feature {}
    parse_file (f: TEXT_FILE_READ)
       local
-         line: STRING
+         line_num: INTEGER; line: STRING
       do
          from
+            line_num := 1
          until
             f.end_of_input
          loop
@@ -60,22 +61,22 @@ feature {}
             elseif line.has_prefix("#") or line.has_prefix("--") then
                -- comment
             elseif line.first.is_separator then
-               std_error.put_string("Warning: NO key%N")
-               warn := True
+               warn(line_num.to_string, "Warning: no key")
             else
-               parse_line(line)
+               parse_line(line_num.to_string, line)
             end
 
             if err then
                crash
             end
 
-            warn := False
+            line_num := line_num + 1
+            is_warned := False
             err := False
          end
       end
 
-   parse_line (line: STRING)
+   parse_line (line_num, line: STRING)
       local
          key, value: STRING
       do
@@ -101,7 +102,7 @@ feature {}
             end
 
             if line.is_empty then
-               std_error.put_string("Error: malformed value%N")
+               warn(line_num, "Error: malformed value")
                err := True
             end
          else
@@ -113,7 +114,7 @@ feature {}
                line.remove_first
             end
             if value.is_empty then
-               std_error.put_string("Error: NO value%N")
+               warn(line_num, "Error: no value")
                err := True
             end
 
@@ -123,16 +124,22 @@ feature {}
             elseif line.has_prefix("#") or line.has_prefix("--") then
                -- comment OK
             else
-               std_error.put_string("Error: malformed value%N")
+               warn(line_num, "Error: malformed value")
                err := True
             end
          end
 
-         if not (warn or err) then
+         if not (is_warned or err) then
             dict.put(value, key)
          end
       end
 
-   warn, err: BOOLEAN
+   is_warned, err: BOOLEAN
+
+   warn (position, message: STRING)
+      do
+         std_error.put_string(message + " at " + position + "%N")
+         is_warned := True
+      end
 
 end -- class CONFPARSER
