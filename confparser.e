@@ -58,7 +58,7 @@ feature {}
             line := f.last_string
             if line.count = 0 then
                -- nop
-            elseif line.has_prefix("#") or line.has_prefix("--") then
+            elseif line.has_prefix(once "#") or line.has_prefix(once "--") then
                -- comment
             elseif line.first.is_separator then
                warn(line_num.to_string, "Warning: no key")
@@ -143,7 +143,7 @@ feature {}
          if line.is_empty then
             -- OK
             Result := True
-         elseif line.has_prefix("#") or line.has_prefix("--") then
+         elseif line.has_prefix(once "#") or line.has_prefix(once "--") then
             -- comment OK
             Result := True
          end
