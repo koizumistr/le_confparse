@@ -104,6 +104,12 @@ feature {}
             if line.is_empty then
                warn(line_num, "Error: malformed value")
                err := True
+            elseif line.first = '"' then
+               line.remove_first
+               if not is_trailing_comments(line) then
+                  warn(line_num, "Error: malformed value")
+                  err := True
+               end
             end
          else
             from
@@ -118,11 +124,8 @@ feature {}
                err := True
             end
 
-            line.left_adjust
-            if line.is_empty then
+            if is_trailing_comments(line) then
                -- OK
-            elseif line.has_prefix("#") or line.has_prefix("--") then
-               -- comment OK
             else
                warn(line_num, "Error: malformed value")
                err := True
@@ -131,6 +134,18 @@ feature {}
 
          if not (is_warned or err) then
             dict.put(value, key)
+         end
+      end
+
+   is_trailing_comments (line: STRING): BOOLEAN
+      do
+         line.left_adjust
+         if line.is_empty then
+            -- OK
+            Result := True
+         elseif line.has_prefix("#") or line.has_prefix("--") then
+            -- comment OK
+            Result := True
          end
       end
 
